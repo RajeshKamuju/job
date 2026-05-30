@@ -1,0 +1,6 @@
+{
+  "name": "Job Portal",
+  "description": "A comprehensive multi-role Job Portal containing customized dashboards and tools for Job Seekers, Recruiters, and Admins.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
