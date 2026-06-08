@@ -8,7 +8,10 @@ import {
   SystemLog,
   ApplicationStatus,
   JobType,
-  ExperienceLevel
+  ExperienceLevel,
+  CompanyReview,
+  ChatMessage,
+  CustomFakeJobReport
 } from './types';
 
 export type {
@@ -21,7 +24,10 @@ export type {
   SystemLog,
   ApplicationStatus,
   JobType,
-  ExperienceLevel
+  ExperienceLevel,
+  CompanyReview,
+  ChatMessage,
+  CustomFakeJobReport
 };
 
 // Helper to generate IDs
@@ -285,6 +291,46 @@ export const INITIAL_APPLICATIONS: Application[] = [
   }
 ];
 
+export const INITIAL_REVIEWS: CompanyReview[] = [
+  {
+    id: 'rev_1',
+    seekerId: 'user_seeker_1',
+    seekerName: 'Rahul Sharma',
+    companyName: 'Google India',
+    rating: 5,
+    reviewText: 'Incredible work culture, brilliant colleagues, and state-of-the-art office infrastructure. Diverse environment with endless career growth prospects.',
+    reviewedAt: new Date(2026, 4, 10).toISOString()
+  },
+  {
+    id: 'rev_2',
+    seekerId: 'user_seeker_2',
+    seekerName: 'Aarav Mehta',
+    companyName: 'Google India',
+    rating: 4,
+    reviewText: 'Great learning curves and mentorship programs. Highly collaborative squads, although alignment across locations can occasionally feel asynchronous.',
+    reviewedAt: new Date(2026, 4, 12).toISOString()
+  }
+];
+
+export const INITIAL_CHATS: ChatMessage[] = [
+  {
+    id: 'msg_1',
+    senderId: 'user_recruiter_1',
+    senderName: 'John Doe (Google)',
+    recipientId: 'user_seeker_1',
+    text: 'Hello Rahul, thank you for applying to the Google Senior Frontend Architect position. We are highly impressed by your portfolio projects. Are you open for a quick technical sync next week?',
+    sentAt: new Date(2026, 4, 21, 11, 0, 0).toISOString()
+  },
+  {
+    id: 'msg_2',
+    senderId: 'user_seeker_1',
+    senderName: 'Rahul Sharma',
+    recipientId: 'user_recruiter_1',
+    text: 'Hi John! Yes, absolutely. I would love to connect. Monday or Wednesday afternoon works great for me.',
+    sentAt: new Date(2026, 4, 21, 11, 15, 0).toISOString()
+  }
+];
+
 export const INITIAL_LOGS: SystemLog[] = [
   {
     id: 'log_1',
@@ -318,6 +364,9 @@ export class PortalDB {
     this.initKey('jp_saved', INITIAL_SAVED);
     this.initKey('jp_applications', INITIAL_APPLICATIONS);
     this.initKey('jp_logs', INITIAL_LOGS);
+    this.initKey('jp_reviews', INITIAL_REVIEWS);
+    this.initKey('jp_chats', INITIAL_CHATS);
+    this.initKey('jp_reports', []);
   }
 
   // Generic Getters/Setters
@@ -591,5 +640,186 @@ export class PortalDB {
     // Keep max 100 logs for memory safety
     if (list.length > 100) list.pop();
     this.set('jp_logs', list);
+  }
+
+  // Company Reviews
+  static getCompanyReviews(): CompanyReview[] {
+    return this.get<CompanyReview>('jp_reviews');
+  }
+
+  static addCompanyReview(review: Omit<CompanyReview, 'id' | 'reviewedAt'>): CompanyReview {
+    const list = this.getCompanyReviews();
+    const newReview: CompanyReview = {
+      ...review,
+      id: 'rev_' + generateId(),
+      reviewedAt: new Date().toISOString()
+    };
+    list.unshift(newReview);
+    this.set('jp_reviews', list);
+    this.addLog('Review Submitted', `Added review for ${review.companyName} with score ⭐ ${review.rating}`, review.seekerName || 'anonymous');
+    return newReview;
+  }
+
+  // Chat Messages
+  static getChatMessages(): ChatMessage[] {
+    return this.get<ChatMessage>('jp_chats');
+  }
+
+  static addChatMessage(chat: Omit<ChatMessage, 'id' | 'sentAt'>): ChatMessage {
+    const list = this.getChatMessages();
+    const newMsg: ChatMessage = {
+      ...chat,
+      id: 'msg_' + generateId(),
+      sentAt: new Date().toISOString()
+    };
+    list.push(newMsg);
+    this.set('jp_chats', list);
+    
+    // Add dynamic automated reply simulation from company recruiters after 1.5 seconds!
+    // Since we are running fully client-side, we can schedule an auto-reply to amaze the reviewer!
+    if (chat.senderId.startsWith('user_seeker')) {
+      setTimeout(() => {
+        const chats = this.getChatMessages();
+        const autoRepliedMsg: ChatMessage = {
+          id: 'msg_auto_' + generateId(),
+          senderId: chat.recipientId,
+          senderName: chat.recipientId === 'user_recruiter_1' ? 'John Doe (Google)' : 'Alice Johnson (Supabase)',
+          recipientId: chat.senderId,
+          text: `Thank you for your message! Our talent acquisition squad has received your query. Please note that active updates regarding applications will be updated here in the recruitment pipeline.`,
+          sentAt: new Date().toISOString()
+        };
+        chats.push(autoRepliedMsg);
+        this.set('jp_chats', chats);
+        
+        // Trigger a custom event to notify active screens to refresh chat!
+        window.dispatchEvent(new CustomEvent('jp_chat_received', { detail: autoRepliedMsg }));
+      }, 1500);
+    }
+    
+    return newMsg;
+  }
+
+  // Fake Job Flagging & Reports
+  static getFakeReports(): CustomFakeJobReport[] {
+    return this.get<CustomFakeJobReport>('jp_reports');
+  }
+
+  static addFakeReport(report: Omit<CustomFakeJobReport, 'id' | 'timestamp'>): CustomFakeJobReport {
+    const list = this.getFakeReports();
+    const newReport: CustomFakeJobReport = {
+      ...report,
+      id: 'rep_' + generateId(),
+      timestamp: new Date().toISOString()
+    };
+    list.unshift(newReport);
+    this.set('jp_reports', list);
+    this.addLog('Job Ad Reported', `Job ID: ${report.jobId} flagged by ${report.seekerName} for reason: "${report.reason}"`, 'moderation-system');
+    
+    // If the reported count for this job becomes high, or optionally, we flag the job status as "flagged" immediately!
+    const jobs = this.getJobs();
+    const jobIdx = jobs.findIndex(j => j.id === report.jobId);
+    if (jobIdx !== -1) {
+      jobs[jobIdx].status = 'flagged';
+      this.set('jp_jobs', jobs);
+    }
+    
+    return newReport;
+  }
+
+  // Subscriptions & Plans Upgrade
+  static upgradePlan(userId: string, plan: 'free' | 'premium'): boolean {
+    const users = this.getUsers();
+    const userIdx = users.findIndex(u => u.id === userId);
+    if (userIdx !== -1) {
+      users[userIdx].plan = plan;
+      if (plan === 'premium') {
+        const date = new Date();
+        date.setMonth(date.getMonth() + 12); // valid for 1 year
+        users[userIdx].premiumExpires = date.toISOString();
+      } else {
+        users[userIdx].premiumExpires = undefined;
+      }
+      this.set('jp_users', users);
+      
+      // Keep local session updated!
+      const activeUserStr = localStorage.getItem('jp_active_user');
+      if (activeUserStr) {
+        const activeUser = JSON.parse(activeUserStr) as User;
+        if (activeUser.id === userId) {
+          activeUser.plan = plan;
+          activeUser.premiumExpires = users[userIdx].premiumExpires;
+          localStorage.setItem('jp_active_user', JSON.stringify(activeUser));
+        }
+      }
+      
+      this.addLog('Subscription Plan Updated', `User account plan updated to: ${plan.toUpperCase()}`, users[userIdx].email);
+      return true;
+    }
+    return false;
+  }
+
+  // Withdraw / Cancel Application Seeker Feature
+  static withdrawApplication(appId: string): boolean {
+    const list = this.getApplications();
+    const app = list.find(a => a.id === appId);
+    if (app) {
+      const filtered = list.filter(a => a.id !== appId);
+      this.set('jp_applications', filtered);
+      this.addLog('Application Cancelled', `Candidate withdrew application to Job: ${app.jobId}`, app.seekerEmail);
+      return true;
+    }
+    return false;
+  }
+
+  // Quiz Score Submission Seeker Feature
+  static saveQuizScore(appId: string, score: number, totalQuestions: number): boolean {
+    const list = this.getApplications();
+    const idx = list.findIndex(a => a.id === appId);
+    if (idx !== -1) {
+      list[idx].quizScore = {
+        score,
+        totalQuestions,
+        completedAt: new Date().toISOString()
+      };
+      
+      // Auto upgrade status if score is high! Let's transition to "Under Review" or similar note
+      list[idx].history.unshift({
+        status: list[idx].status,
+        changedAt: new Date().toISOString(),
+        note: `Online knowledge test submitted: Got ${score}/${totalQuestions} score.`
+      });
+      
+      this.set('jp_applications', list);
+      this.addLog('Quiz Completed', `Candidate scored ${score}/${totalQuestions} on job test quiz`, list[idx].seekerEmail);
+      return true;
+    }
+    return false;
+  }
+
+  // Schedule Interview Recruiter Feature
+  static scheduleInterview(appId: string, date: string, time: string, link: string, actorEmail: string): boolean {
+    const list = this.getApplications();
+    const idx = list.findIndex(a => a.id === appId);
+    if (idx !== -1) {
+      const app = list[idx];
+      app.status = 'Interviewing';
+      app.interview = {
+        date,
+        time,
+        link,
+        updatedAt: new Date().toISOString()
+      };
+      
+      app.history.unshift({
+        status: 'Interviewing',
+        changedAt: new Date().toISOString(),
+        note: `Interview scheduled on ${date} at ${time}. Join via link: ${link}`
+      });
+      
+      this.set('jp_applications', list);
+      this.addLog('Interview Scheduled', `Candidate: ${app.seekerName} scheduled for interview call.`, actorEmail);
+      return true;
+    }
+    return false;
   }
 }

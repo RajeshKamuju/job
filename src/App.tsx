@@ -86,10 +86,10 @@ export default function App() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5 leading-none">
-                    <span className="font-display font-black tracking-tight text-lg text-slate-900">JobPulse</span>
-                    <span className="px-1.5 py-0.5 text-[8px] font-black bg-brand-600 text-white rounded-md uppercase tracking-widest">v1.2</span>
+                    <span className="font-display font-black tracking-tight text-lg text-slate-900">CareerForge</span>
+                    <span className="px-1.5 py-0.5 text-[8px] font-black bg-brand-600 text-white rounded-md uppercase tracking-widest">v2.0</span>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Academic Project Engine</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">CareerForge — Build Your Future, One Opportunity at a Time.</p>
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function App() {
           <footer className="bg-white border-t border-slate-200/80 px-4 py-4 text-center text-xs text-slate-400">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
               <span className="font-medium">
-                &copy; 2026 <strong>JobPulse Project Module</strong>. Structured for interview verification.
+                &copy; 2026 <strong>CareerForge Platform</strong>. Build Your Future, One Opportunity at a Time.
               </span>
               <div className="flex items-center gap-4 text-slate-400">
                 <span>React 19</span>
