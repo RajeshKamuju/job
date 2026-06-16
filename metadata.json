@@ -2,5 +2,5 @@
   "name": "CareerForge",
   "description": "CareerForge — Build Your Future, One Opportunity at a Time. A premium enterprise-grade recruitment platform with AI Resume Analyzer, Skill Gap Detector, Interactive AI Assistant, Company Reviews, and multi-dashboard capability.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
